@@ -50,32 +50,13 @@ class IOFunctions:
         return [subjects, csp]
 
     @staticmethod
-    def writeOutputsToFile(outputFileName, allSubjects):
+    def writeOutputsToFile(outputFileName, answer: []):
         with open(outputFileName, mode='w') as file:
             writer = csv.writer(
                 file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-            for i in allSubjects:
-                writer.writerow([i.name, i.temp_time, i.temp_room])
-
-    @staticmethod
-    def loadDummyValues():
-        inputList = [
-            ["S1", "o", "M1"],
-            ["S2", "o", "M2", "M3", "T1"],
-            ["S3", "o", "M1"],
-            ["S4", "c", "M2"],
-            ["S5", "c", "M2", "M3", "T2"],
-            ["S6", "c", "M2", "M3", "T1"],
-            ["R1", "R2"],
-        ]
-        rooms = inputList.pop()
-        subjects = []
-        csp = {}
-        for i in inputList:
-            subjects.append(Subject(i[2:], copy.deepcopy(rooms), i[1], i[0]))
-            csp[i[0]] = " "
-        return [subjects, csp]
+            for i in answer:
+                writer.writerow(i)
 
     @staticmethod
     def printResult(allSubjects):
@@ -106,11 +87,6 @@ class CSP:
         for subject in csp.keys():
             if assignment[subject.name] == ' ':
                 unassignedSubjects.append(subject)
-        print("===================")
-        print("UNASSIGNED")
-        for s in unassignedSubjects:
-            print(s.name)
-        print("===================")
         leastSlotSubjects = []
         minSlots = float('inf')
 
@@ -172,7 +148,6 @@ class CSP:
 
         sortedTimeSlots = dict(
             sorted(constraintSlots.items(), key=lambda x: x[1]))
-        print(sortedTimeSlots)
         return sortedTimeSlots
 
     @staticmethod
@@ -185,6 +160,37 @@ class CSP:
         return csp
 
     @staticmethod
+    def assignRooms(allRooms: [], assignment: {}, allSubjects: []) -> []:
+        """
+        """
+        prohibitedRooms = {}
+        assignedSubjects = []
+        for i in assignment:
+            for s in allSubjects:
+                if s.name == i:
+                    s.temp_time = assignment[i]
+                    assignedSubjects.append(s)
+        for i in assignment:
+            prohibitedRooms[assignment[i]] = []
+
+        for i in assignedSubjects:
+            timeSlot = i.temp_time
+            if i.type == "c":
+                for room in allRooms:
+                    if room not in prohibitedRooms[timeSlot]:
+                        i.temp_room = room
+                        prohibitedRooms[timeSlot].append(room)
+            else:
+                for room in allRooms:
+                    if room not in prohibitedRooms[timeSlot]:
+                        i.temp_room = room
+        answer = []
+        for i in assignedSubjects:
+            print(i.name, i.temp_time, i.temp_room)
+            answer.append([i.name, i.temp_time, i.temp_room])
+        return answer
+
+    @staticmethod
     def backtrackingSearch(subjects, csp, assignment) -> bool:
         """
         """
@@ -194,7 +200,6 @@ class CSP:
     def recursiveBacktracking(subjects: [], csp: {}, assignment: {}) -> bool:
         """
         """
-        print(assignment)
         if (CSP.assignmentComplete(assignment)):
             return True
         else:
@@ -221,10 +226,15 @@ class CSP:
         allSubjects = data[0]
         csp = data[1]
         assignment = {}
+        allRooms = allSubjects[0].domain_rooms
         for i in allSubjects:
             assignment[i.name] = " "
-        print(assignment)
-        print(CSP.backtrackingSearch(allSubjects, csp, assignment))
+        if (CSP.backtrackingSearch(allSubjects, csp, assignment)):
+            print(assignment)
+            answer = CSP.assignRooms(allRooms, assignment, allSubjects)
+            IOFunctions.writeOutputsToFile(outputFileName, answer)
+        else:
+            print("No possible solution")
 
         # csp has key value pairs: key is subject name, value is the list of timeslots
 
