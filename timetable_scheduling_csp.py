@@ -13,6 +13,8 @@ class Subject:
     def __init__(self, domain_times: [], domain_rooms: [], type: str, name: str):
         self.domain_times = domain_times
         self.domain_rooms = domain_rooms
+        self.original_rooms = domain_rooms
+        self.original_times = domain_rooms
         self.temp_time = ""
         self.temp_room = ""
         self.type = type
@@ -29,7 +31,7 @@ class Subject:
 class Constraints:
 
     @staticmethod
-    def isSatisfied(variable1: Subject, assignedSubjects: []) -> bool:
+    def isSatisfied2(variable1: Subject, assignedSubjects: []) -> bool:
         """
         accepts two subjects and checks if they satisfy the constraints
         1. If both are c, both cannot have the same time slot
@@ -73,7 +75,6 @@ class Constraints:
         # all other options are valid
         return True
 
-
 class IOFunctions:
     @staticmethod
     def loadVariablesWithDomains(inputFileName: str):
@@ -87,7 +88,6 @@ class IOFunctions:
         inputList = []
         for l in inputList1:
             inputList.append([s.strip() for s in l])
-
 
         print(inputList)
         subjects = []
@@ -140,6 +140,10 @@ class CSP:
             for i in subjects:
                 if time_slot in i.domain_times:
                     i.domain_times.remove(time_slot)
+        elif subject.type == "o":
+            for i in subjects:
+                if i.type == "c" and time_slot in i.domain_times:
+                    i.domain_times.remove(time_slot)
         return subjects
 
     @staticmethod
@@ -149,14 +153,14 @@ class CSP:
         outputFileName = input("Output file name: ")
 
         # contains Subject object
-        allSubjects = IOFunctions.loadVariablesWithDomains(inputFileName)
-        # allSubjects = IOFunctions.loadDummyValues()
+        # allSubjects = IOFunctions.loadVariablesWithDomains(inputFileName)
+        allSubjects = IOFunctions.loadDummyValues()
 
         # TODO: reduce the domains of the problem
 
         # list of the names of the subjects
         # variables = IOFunctions.loadVariables(domains)
-        result = CSP.backtrackingSearch([], allSubjects)
+        result = CSP.unoptimizedBacktrackingSearch([], allSubjects)
         if (result == None):
             print("No possible solutions")
         else:
@@ -164,7 +168,7 @@ class CSP:
             IOFunctions.writeOutputsToFile(outputFileName, result)
 
     @staticmethod
-    def backtrackingSearch(assignedSubjects: [], allSubjects: []):
+    def unoptimizedBacktrackingSearch(assignedSubjects: [], allSubjects: []):
         """
         performs backtracking search and returns valid assignments per subject
         """
@@ -194,11 +198,17 @@ class CSP:
             subject.temp_time = time
             for room in domain_rooms:
                 subject.temp_room = room
-                if Constraints.isSatisfied(subject, assignedSubjects):
-                    CSP.updateDomains(subject, time, allSubjects)
+                if Constraints.isSatisfied2(subject, assignedSubjects):
+                    # CSP.updateDomains(subject, time, allSubjects)
+                    print()
+                    print("==========================")
+                    for i in allSubjects:
+                        print(i.name, i.domain_times)
+                    print("==========================")
+                    print()
                     tempAssignedSubjects = copy.deepcopy(assignedSubjects)
                     tempAssignedSubjects.append(subject)
-                    result = CSP.backtrackingSearch(
+                    result = CSP.unoptimizedBacktrackingSearch(
                         tempAssignedSubjects, allSubjects)
                     if (result != None):
                         return result
