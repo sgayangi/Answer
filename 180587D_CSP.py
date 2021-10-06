@@ -1,5 +1,7 @@
 import copy
 import csv
+
+
 class Subject:
     """
     domain_times: array
@@ -15,6 +17,7 @@ class Subject:
         self.temp_room = ""
         self.type = type
         self.name = name
+
 
 class IOFunctions:
     @staticmethod
@@ -32,7 +35,6 @@ class IOFunctions:
         rooms = inputList.pop()
         csp = {}
         for i in inputList:
-            print(i)
             newSubject = (Subject(i[2:], copy.deepcopy(rooms), i[1], i[0]))
             subjects.append(newSubject)
             csp[newSubject] = i[2:]
@@ -51,6 +53,7 @@ class IOFunctions:
     def printResult(allSubjects):
         for i in allSubjects:
             print(i.name, i.temp_time, i.temp_room)
+
 
 class CSP:
     @staticmethod
@@ -162,15 +165,16 @@ class CSP:
 
         for i in assignedSubjects:
             timeSlot = i.temp_time
-            if i.type == "c":
-                for room in allRooms:
-                    if room not in prohibitedRooms[timeSlot]:
-                        i.temp_room = room
-                        prohibitedRooms[timeSlot].append(room)
-            else:
-                for room in allRooms:
-                    if room not in prohibitedRooms[timeSlot]:
-                        i.temp_room = room
+            for room in allRooms:
+                if room not in prohibitedRooms[timeSlot]:
+                    i.temp_room = room
+                    prohibitedRooms[timeSlot].append(room)
+                    break
+
+        for i in assignedSubjects:
+            if i.temp_room == "":
+                return None
+
         answer = []
         for i in assignedSubjects:
             print(i.name, i.temp_time, i.temp_room)
@@ -217,9 +221,11 @@ class CSP:
         for i in allSubjects:
             assignment[i.name] = " "
         if (CSP.backtrackingSearch(allSubjects, csp, assignment)):
-            print(assignment)
             answer = CSP.assignRooms(allRooms, assignment, allSubjects)
-            IOFunctions.writeOutputsToFile(outputFileName, answer)
+            if (answer!= None):
+                IOFunctions.writeOutputsToFile(outputFileName, answer)
+            else:
+                print("No possible solution")
         else:
             print("No possible solution")
 
